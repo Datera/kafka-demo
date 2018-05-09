@@ -22,7 +22,7 @@ def gen_messages():
 
 
 def sender(producer):
-    messages = gen_messages(args.messages)
+    messages = gen_messages()
     topic = args.topic
     while True:
         prod = random.choice(("producera", "producerb"))
@@ -50,6 +50,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("topic")
     parser.add_argument("broker")
-    parser.add_argument("-m", "--messages", default=1000000)
     args = parser.parse_args()
     sys.exit(main(args))
