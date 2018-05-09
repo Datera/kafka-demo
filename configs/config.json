@@ -1,0 +1,165 @@
+{
+  "title": "FlowBro Example",
+  "components": [
+    {
+      "id": "ProducerA",
+      "top": 50,
+      "left": 100
+    },
+    {
+      "id": "ProducerB",
+      "top": 50,
+      "left": 300
+    },
+    {
+      "id": "ConsumerA",
+      "top": 500,
+      "left": 100
+    },
+    {
+      "id": "ConsumerB",
+      "top": 500,
+      "left": 300
+    }
+  ],
+  "rules": [
+    {
+      "patterns": [
+        {
+          "field": "{{ .Topic }}",
+          "pattern": "my-demo"
+        },
+        {
+          "field": "{{ .Value.prod }}",
+          "pattern": "producera"
+        },
+        {
+          "field": "{{ .Value.dest }}",
+          "pattern": "consumera"
+        }
+      ],
+      "events": [
+        {
+          "eventType": "message",
+          "sourceId": "ProducerA",
+          "targetId": "ConsumerA",
+          "text": "Route push notification to device",
+          "aggregate": true,
+          "noJSON": true
+        }
+      ]
+    },
+    {
+      "patterns": [
+        {
+          "field": "{{ .Topic }}",
+          "pattern": "my-demo"
+        },
+        {
+          "field": "{{ .Value.prod }}",
+          "pattern": "producera"
+        },
+        {
+          "field": "{{ .Value.dest }}",
+          "pattern": "consumerb"
+        }
+      ],
+      "events": [
+        {
+          "eventType": "message",
+          "sourceId": "ProducerA",
+          "targetId": "ConsumerB",
+          "text": "Route push notification to device",
+          "aggregate": true,
+          "noJSON": true
+        }
+      ]
+    },
+    {
+      "patterns": [
+        {
+          "field": "{{ .Topic }}",
+          "pattern": "my-demo"
+        },
+        {
+          "field": "{{ .Value.prod }}",
+          "pattern": "producerb"
+        },
+        {
+          "field": "{{ .Value.dest }}",
+          "pattern": "consumera"
+        }
+      ],
+      "events": [
+        {
+          "eventType": "message",
+          "sourceId": "ProducerB",
+          "targetId": "ConsumerA",
+          "text": "Route push notification to device",
+          "aggregate": true,
+          "noJSON": true
+        }
+      ]
+    },
+    {
+      "patterns": [
+        {
+          "field": "{{ .Topic }}",
+          "pattern": "my-demo"
+        },
+        {
+          "field": "{{ .Value.prod }}",
+          "pattern": "producerb"
+        },
+        {
+          "field": "{{ .Value.dest }}",
+          "pattern": "consumerb"
+        }
+      ],
+      "events": [
+        {
+          "eventType": "message",
+          "sourceId": "ProducerB",
+          "targetId": "ConsumerB",
+          "text": "Route push notification to device",
+          "aggregate": true,
+          "noJSON": true
+        }
+      ]
+    }
+  ],
+  "colourPalette": [
+    "#f44336",
+    "#9c27b0",
+    "#3f51b5",
+    "#03a9f4",
+    "#009688",
+    "#8bc34a",
+    "#ffeb3b",
+    "#ff9800",
+    "#795548",
+    "#607d8b",
+    "#e91e63",
+    "#673ab7",
+    "#2196f3",
+    "#00bcd4",
+    "#4caf50",
+    "#cddc39",
+    "#ffc107",
+    "#ff5722",
+    "#9e9e9e"
+  ],
+  "eventSeparationIntervalMilliseconds": 100,
+  "animationLengthMilliseconds": 1000,
+  "hideIgnoredMessages": false,
+  "webSocketAddress": "172.19.3.8:41234",
+  "kafka": {
+    "brokers": "172.19.3.8:9092",
+    "consumers": [
+      {
+        "topic": "my-demo"
+      }
+    ]
+  },
+  "tutorial": false
+}
