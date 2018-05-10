@@ -41,8 +41,7 @@ def main(args):
     send.start()
     while True:
         print(int(producer.metrics()['producer-metrics'][
-            'outgoing-byte-rate']), end='\r')
-        # print("-------")
+            'outgoing-byte-rate']) / 1000000, "MB/s", end='\r')
         time.sleep(1)
 
 
