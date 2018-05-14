@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+	metrics "github.com/rcrowley/go-metrics"
 )
 
 const (
@@ -32,7 +33,6 @@ func init() {
 
 func randString(n int) string {
 	b := make([]byte, n)
-	// A src.Int63() generates 63 random bits
 	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
 		if remain == 0 {
 			cache, remain = src.Int63(), letterIdxMax
@@ -48,24 +48,18 @@ func randString(n int) string {
 	return string(b)
 }
 
-func genMsgLoop() {
-	for {
-		msg := randString(100)
-		msgChan <- &msg
-	}
-}
-
 func sendMsgs(c chan<- *sarama.ProducerMessage) error {
 	consumers := []string{"consumera", "consumerb"}
 	producers := []string{"producera", "producerb"}
+	dest := consumers[rand.Intn(2)]
+	prod := producers[rand.Intn(2)]
+	r := rand.Intn(2001-100) + 100
 	for {
-		dest := consumers[rand.Intn(2)]
-		prod := producers[rand.Intn(2)]
-		r := rand.Intn(2001-100) + 100
 		for i := 0; i < r; i++ {
-			msg := <-msgChan
-			data, err := json.Marshal(map[string]string{"log": *msg, "dest": dest, "prod": prod, "num": strconv.Itoa(i)})
+			msg := randString(50)
+			data, err := json.Marshal(map[string]string{"log": msg, "dest": dest, "prod": prod, "num": strconv.Itoa(i)})
 			if err != nil {
+				fmt.Println(err)
 				return err
 			}
 			c <- &sarama.ProducerMessage{
@@ -75,7 +69,7 @@ func sendMsgs(c chan<- *sarama.ProducerMessage) error {
 			}
 		}
 	}
-
+	return nil
 }
 
 func main() {
@@ -88,7 +82,14 @@ func main() {
 		fmt.Println("Broker Required")
 		os.Exit(1)
 	}
+	appMetricRegistry := metrics.NewRegistry()
 	conf := sarama.NewConfig()
+	conf.Producer.RequiredAcks = sarama.WaitForAll
+	conf.Producer.Return.Successes = true
+	conf.Producer.Return.Errors = true
+	conf.Producer.MaxMessageBytes = 54857600
+	conf.MetricRegistry = metrics.NewPrefixedChildRegistry(appMetricRegistry, "sarama.")
+	meter := metrics.GetOrRegisterMeter("outgoing-byte-rate", conf.MetricRegistry)
 	conf.Producer.RequiredAcks = sarama.WaitForLocal
 	producer, err := sarama.NewAsyncProducer([]string{*broker}, conf)
 	if err != nil {
@@ -96,10 +97,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	go genMsgLoop()
+	go func() {
+		for {
+			fmt.Printf("%d\r", int(meter.Rate1()))
+			time.Sleep(time.Second)
+		}
+	}()
 
-	for i := 0; i < 10; i++ {
-		sendMsgs(producer.Input())
+	go sendMsgs(producer.Input())
+
+	for {
+		select {
+		case err = <-producer.Errors():
+			fmt.Println(err)
+		case <-producer.Successes():
+		}
 	}
+
 	os.Exit(0)
 }
