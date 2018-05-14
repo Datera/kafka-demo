@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/alecthomas/units"
 	metrics "github.com/rcrowley/go-metrics"
 )
 
@@ -23,8 +24,10 @@ const (
 var (
 	topic   = flag.String("topic", "", "Kafka Topic")
 	broker  = flag.String("broker", "", "Kafka Broker")
+	verbose = flag.Bool("verbose", false, "Print Verbose Messaging")
 	msgChan = make(chan *string, 1000)
 	src     = rand.NewSource(time.Now().UnixNano())
+	signals = make(chan os.Signal, 1)
 )
 
 func init() {
@@ -48,7 +51,7 @@ func randString(n int) string {
 	return string(b)
 }
 
-func sendMsgs(c chan<- *sarama.ProducerMessage) error {
+func sendMsgs(producer sarama.AsyncProducer) error {
 	consumers := []string{"consumera", "consumerb"}
 	producers := []string{"producera", "producerb"}
 	dest := consumers[rand.Intn(2)]
@@ -62,10 +65,21 @@ func sendMsgs(c chan<- *sarama.ProducerMessage) error {
 				fmt.Println(err)
 				return err
 			}
-			c <- &sarama.ProducerMessage{
+			m := &sarama.ProducerMessage{
 				Topic: *topic,
 				Key:   sarama.ByteEncoder("log"),
 				Value: sarama.ByteEncoder(data),
+			}
+
+			select {
+			case producer.Input() <- m:
+			case <-signals:
+				break
+			case err = <-producer.Errors():
+				if *verbose {
+					fmt.Println(err)
+				}
+			case <-producer.Successes():
 			}
 		}
 	}
@@ -89,9 +103,10 @@ func main() {
 	conf.Producer.Return.Errors = true
 	conf.Producer.MaxMessageBytes = 54857600
 	conf.MetricRegistry = metrics.NewPrefixedChildRegistry(appMetricRegistry, "sarama.")
-	meter := metrics.GetOrRegisterMeter("outgoing-byte-rate", conf.MetricRegistry)
 	conf.Producer.RequiredAcks = sarama.WaitForLocal
+	meter := metrics.GetOrRegisterMeter("outgoing-byte-rate", conf.MetricRegistry)
 	producer, err := sarama.NewAsyncProducer([]string{*broker}, conf)
+	defer producer.Close()
 	if err != nil {
 		fmt.Printf("Failed to start Sarama producer: %s\n", err)
 		os.Exit(1)
@@ -99,20 +114,15 @@ func main() {
 
 	go func() {
 		for {
-			fmt.Printf("%d\r", int(meter.Rate1()))
+			b := meter.Rate1() / float64(units.MB)
+			fmt.Printf("%f MB/s\r", b)
 			time.Sleep(time.Second)
 		}
 	}()
 
-	go sendMsgs(producer.Input())
+	go sendMsgs(producer)
 
-	for {
-		select {
-		case err = <-producer.Errors():
-			fmt.Println(err)
-		case <-producer.Successes():
-		}
-	}
+	select {}
 
 	os.Exit(0)
 }
