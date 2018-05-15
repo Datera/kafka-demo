@@ -1,5 +1,5 @@
 {
-  "title": "FlowBro Example",
+  "title": "Vancouver Demo",
   "components": [
     {
       "id": "ProducerA",
@@ -27,7 +27,7 @@
       "patterns": [
         {
           "field": "{{ .Topic }}",
-          "pattern": "my-demo"
+          "pattern": "vancouver-demo"
         },
         {
           "field": "{{ .Value.prod }}",
@@ -53,7 +53,7 @@
       "patterns": [
         {
           "field": "{{ .Topic }}",
-          "pattern": "my-demo"
+          "pattern": "vancouver-demo"
         },
         {
           "field": "{{ .Value.prod }}",
@@ -79,7 +79,7 @@
       "patterns": [
         {
           "field": "{{ .Topic }}",
-          "pattern": "my-demo"
+          "pattern": "vancouver-demo"
         },
         {
           "field": "{{ .Value.prod }}",
@@ -105,7 +105,7 @@
       "patterns": [
         {
           "field": "{{ .Topic }}",
-          "pattern": "my-demo"
+          "pattern": "vancouver-demo"
         },
         {
           "field": "{{ .Value.prod }}",
@@ -152,12 +152,12 @@
   "eventSeparationIntervalMilliseconds": 100,
   "animationLengthMilliseconds": 1000,
   "hideIgnoredMessages": false,
-  "webSocketAddress": "172.19.3.8:41234",
+  "webSocketAddress": "172.19.3.101:41234",
   "kafka": {
-    "brokers": "172.19.3.8:9092",
+    "brokers": "203.0.113.102:9092",
     "consumers": [
       {
-        "topic": "my-demo"
+        "topic": "vancouver-demo"
       }
     ]
   },
