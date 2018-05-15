@@ -54,12 +54,12 @@ func randString(n int) string {
 func sendMsgs(producer sarama.AsyncProducer) error {
 	consumers := []string{"consumera", "consumerb"}
 	producers := []string{"producera", "producerb"}
-	dest := consumers[rand.Intn(2)]
-	prod := producers[rand.Intn(2)]
-	r := rand.Intn(2001-100) + 100
 	for {
+		dest := consumers[rand.Intn(2)]
+		prod := producers[rand.Intn(2)]
+		r := rand.Intn(2001-100) + 100
 		for i := 0; i < r; i++ {
-			msg := randString(50)
+			msg := randString(10000)
 			data, err := json.Marshal(map[string]string{"log": msg, "dest": dest, "prod": prod, "num": strconv.Itoa(i)})
 			if err != nil {
 				fmt.Println(err)
@@ -82,6 +82,7 @@ func sendMsgs(producer sarama.AsyncProducer) error {
 			case <-producer.Successes():
 			}
 		}
+		time.Sleep(time.Millisecond)
 	}
 	return nil
 }
