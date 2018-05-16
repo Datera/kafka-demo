@@ -68,8 +68,8 @@ fi
 sudo su ceph-deploy -c "cd ~/my-cluster && ceph-deploy new ${NAME}"
 
 # Set single-node params
-sudo sh -c "echo "osd_pool_default_size = 2" >> /home/ceph-deploy/my-cluster/ceph.conf"
-sudo sh -c "echo "osd_crush_chooseleaf_type = 0" >> /home/ceph-deploy/my-cluster/ceph.conf"
+sudo sh -c "echo 'osd_pool_default_size = 1' >> /home/ceph-deploy/my-cluster/ceph.conf"
+sudo sh -c "echo 'osd_crush_chooseleaf_type = 0' >> /home/ceph-deploy/my-cluster/ceph.conf"
 
 # Install Ceph
 sudo su ceph-deploy -c "cd ~/my-cluster && ceph-deploy install ${NAME}"
