@@ -1,3 +1,4 @@
 kafka-python
 simplejson
 paramiko
+openstacksdk
