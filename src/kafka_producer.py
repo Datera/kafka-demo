@@ -21,7 +21,7 @@ def gen_messages():
         yield "".join(alc[int(random.random() * 26)] for _ in range(100))
 
 
-def sender(producer):
+def sender(producer, flow):
     messages = gen_messages()
     topic = args.topic
     while True:
@@ -29,6 +29,8 @@ def sender(producer):
         dest = random.choice(("consumera", "consumerb"))
         for msg in itertools.islice(messages, random.randint(100, 2000)):
             producer.send(topic, {"log": msg, "dest": dest, "prod": prod})
+            if flow == "dev":
+                time.sleep(0.05)
     print("All Done")
 
 
@@ -36,7 +38,7 @@ def main(args):
     producer = kafka.KafkaProducer(
         bootstrap_servers=[args.broker],
         value_serializer=lambda x: json.dumps(x).encode('utf-8'))
-    send = threading.Thread(target=sender, args=(producer,))
+    send = threading.Thread(target=sender, args=(producer, args.flow))
     send.daemon = True
     send.start()
     while True:
@@ -49,5 +51,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("topic")
     parser.add_argument("broker")
+    parser.add_argument("flow", choices=["dev", "prod"])
     args = parser.parse_args()
     sys.exit(main(args))
