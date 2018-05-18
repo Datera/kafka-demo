@@ -103,17 +103,24 @@ def main(args):
         vprint("Unmounting directory {}".format(mount))
         khost.exe("sudo umount {}".format(mount))
     elif args.operation == "start":
-        devs = json.loads(khost.exe("lsblk --json --fs"))["blockdevices"]
-        found = None
-        for dev in devs:
-            if dev["fstype"] == "xfs":
-                found = "/dev/{}".format(dev["name"])
-                break
-        else:
-            raise EnvironmentError("XFS device not found")
-        # Mount device
-        khost.exe("sudo mount -o {opts} {dev} {mount}".format(
-            opts=args.mount_opts, dev=found, mount=mount))
+        if not args.no_mount:
+            devs = json.loads(khost.exe("lsblk --json --fs"))["blockdevices"]
+            found = None
+            for dev in devs:
+                if dev["fstype"] == "xfs":
+                    found = "/dev/{}".format(dev["name"])
+                    break
+            else:
+                for x in ["b", "c", "d", "e"]:
+                    found = "/dev/vd{}".format(x)
+                    try:
+                        khost.exe("sudo mkfs.xfs {}".format(found))
+                        break
+                    except ValueError as e:
+                        print(e)
+            # Mount device
+            khost.exe("sudo mount -o {opts} {dev} {mount}".format(
+                opts=args.mount_opts, dev=found, mount=mount))
         vprint("Starting kafka server on host {}".format(args.kafka_host))
         khost.exe_bg(
             "sudo ./kafka-server-start.sh ../config/server.properties",
@@ -140,6 +147,7 @@ if __name__ == '__main__':
                         default="rw,sync,relatime,wsync,attr2,inode64,noquota")
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-z", "--zookeeper", default="203.0.113.107")
+    parser.add_argument("-n", "--no-mount", action="store_true")
     args = parser.parse_args()
     if args.verbose:
         VERBOSE = True
