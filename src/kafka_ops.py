@@ -81,7 +81,18 @@ def main(args):
         khost = Host(args.kafka_host, args.username, args.password)
     home = khost.exe("echo $HOME")
     mount = os.path.join(home, args.kafka_mount)
-    if args.operation == "kill":
+    if args.operation == "status":
+        pids = khost.exe(
+            "ps -ef | grep kafka | grep -v grep | awk '{print $2}'").split()
+        if len(pids) > 0:
+            print("Kafka is running")
+        else:
+            print("Kafka is not running")
+        bkrs = khost.exe("echo dump | nc {} 2181 | grep 'brokers/ids'".format(
+            args.zookeeper)).split()
+        print("Brokers found: {}".format(len(bkrs)))
+        print("Brokers: \n{}".format("\n".join(bkrs)))
+    elif args.operation == "kill":
         # Kill kafka
         pids = khost.exe(
             "ps -ef | grep kafka | grep -v grep | awk '{print $2}'").split()
@@ -118,7 +129,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("operation", choices=["kill", "start"])
+    parser.add_argument("operation", choices=["kill", "start", "status"])
     parser.add_argument("kafka_host")
     parser.add_argument("-u", "--username")
     parser.add_argument("-p", "--password")
@@ -128,6 +139,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--mount-opts",
                         default="rw,sync,relatime,wsync,attr2,inode64,noquota")
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("-z", "--zookeeper", default="203.0.113.107")
     args = parser.parse_args()
     if args.verbose:
         VERBOSE = True
