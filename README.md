@@ -28,8 +28,10 @@ Getting Started
 
 Running the Demo
 ----------------
-* Running the demo is simple
-    . (on openstack controller node) $ ./kafka_migrator.py kafka-1,kafka-2,kafka-3 kafka-1,kafka-2,kafka-3 Datera-Bronze
+* Running the demo is simple (on openstack controller node)
+    . $ source admin-creds
+    . $ source demo-venv/bin/activate
+    . $ ./kafka_migrator.py kafka-1,kafka-2,kafka-3 kafka-1,kafka-2,kafka-3 Datera-Bronze
 
 * What does this do?
     . It performs the following on each kafka node
